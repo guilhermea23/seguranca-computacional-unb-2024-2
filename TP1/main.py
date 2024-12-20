@@ -1,4 +1,5 @@
 import random
+import json
 
 def to_bin(text):
     return [format(ord(char), '08b') for char in text]
@@ -80,7 +81,6 @@ def feistel_function(right_half, subkey):
     p4 = [2, 4, 3, 1]
     return apply_permutation(combined, p4)
 
-
 def encrypt_block(block, k1, k2):
     permuted_block = initial_permutation(block)
 
@@ -99,17 +99,56 @@ def encrypt_block(block, k1, k2):
 
     return inverse_permutation(combined)
 
-
-def main():
-    key = gen_key_10b()
-    k1, k2 = generate_subkeys(key)
-
+def encrypt():
     plaintext = input("Digite o texto para criptografar: ")
     binary_text = to_bin(plaintext)
 
-    encrypted_blocks = [encrypt_block(block, k1, k2) for block in binary_text]
-    print("Texto criptografado:", encrypted_blocks)
+    key = gen_key_10b()
+    k1, k2 = generate_subkeys(key)
 
+    encrypted_blocks = [encrypt_block(block, k1, k2) for block in binary_text]
+
+    with open("key.json", "w") as file:
+        json.dump(key, file)
+
+    with open("encrypted_blocks.json", "w") as file:
+        json.dump(encrypted_blocks, file)
+
+    print("\nTexto criptografado salvo em 'encrypted_blocks.json'.")
+    return encrypted_blocks
+
+def decrypt():
+    try:
+        with open("key.json", "r") as file:
+            key = json.load(file)
+        k1, k2 = generate_subkeys(key)
+
+        with open("encrypted_blocks.json", "r") as file:
+            encrypted_blocks = json.load(file)
+
+        decrypted_blocks = [encrypt_block(block, k2, k1) for block in encrypted_blocks]
+        decrypted_text = to_text(decrypted_blocks)
+
+        print("Texto descriptografado:", decrypted_text)
+    except FileNotFoundError:
+        print("Erro: Nenhum dado criptografado ou chave encontrada. Criptografe um texto primeiro.")
+
+def main() -> None:
+    print("\t=====> S-DES <=====\nby: Guilherme Araújo e Guilherme Praxedes")
+    while True:
+        print("\n1. Criptografar texto\n2. Descriptografar texto\n0. Sair do criptosistema")
+        choice = input("Escolha uma opção (0, 1 ou 2): ")
+
+        if choice == "1":
+            encrypt()
+
+        elif choice == "2":
+            decrypt()
+
+        elif choice == "0":
+            break
+        else:
+            print("Opção inválida. Escolha entre 0, 1 e 2.")
 
 if __name__ == "__main__":
     main()
